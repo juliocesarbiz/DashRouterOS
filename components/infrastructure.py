@@ -1,4 +1,5 @@
 # Import packages
+import os
 import pandas as pd
 import dash
 from dash import Dash, html,  dcc
@@ -10,13 +11,14 @@ from dash.dependencies import Input, Output, State
 import plotly.express as px
 
 from pymongo import MongoClient
+from dotenv import load_dotenv
+load_dotenv()
 
 from app import app
 
 # Conectar ao banco de dados MongoDB
-uri = "mongodb+srv://martins:LlmN6xS3wBMHTMch@cluster0.he6wly3.mongodb.net/?retryWrites=true&w=majority"
-client = MongoClient(uri)
-database = client['ufsc']
+client = MongoClient(os.environ["uri_banco"])
+database = client[os.environ["Database_Name"]]
 
 Atualizacao_grafico = 0
 uso_cpu = 0
