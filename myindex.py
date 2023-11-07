@@ -6,7 +6,8 @@ import pandas as pd
 import plotly.express as px
 
 from app import *
-from components import sidebar, dash_rb, dash_cpu,dash_interfaces,infrastructure
+from components import sidebar, dash_rb, dash_cpu,dash_interfaces,infrastructure, dash_alerts
+
 
 #from globals import *
 
@@ -23,10 +24,10 @@ app.layout = dbc.Container(children=[
         dbc.Col([
             dcc.Location(id='url'),
             sidebar.layout
-        ], md=2),
+        ], md=1),
         dbc.Col([
             content
-        ], md=10)
+        ], md=11)
     ])
 
 ], fluid=True,)
@@ -39,6 +40,8 @@ def render_page(pathname):
         return dash_cpu.layout
     elif pathname == '/rb_interfaces':
         return dash_interfaces.layout
+    elif pathname == '/rb_alertas':
+        return dash_alerts.layout
     elif pathname == '/infrastructure':
         return infrastructure.layout
     else:

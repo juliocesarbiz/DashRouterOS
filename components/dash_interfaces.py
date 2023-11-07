@@ -23,21 +23,13 @@ database = client[os.environ["Database_Name"]]
 Atualizacao_grafico = 0
 
 def verifica_lista_portas(data):
-    collection = database['rb_interface']
 
-    # Passo 1: Executar a primeira consulta para obter os valores distintos
+    collection = database['rb_interface']
     distinct_values = collection.distinct("name")
+    print('lista portas distintas')
     print(distinct_values)
 
-    # Passo 2: Usar o resultado da primeira consulta na segunda consulta
-    subquery_result = collection.find({'name': {'$in': distinct_values}})
-    df = pd.DataFrame(subquery_result)
-    lista_interfaces = pd.unique(df[data])
-
-    # Fechar conexão com o MongoDB
-    #client.close()
-
-    return lista_interfaces
+    return distinct_values
 
 
 # Inicializando o aplicativo Dash
@@ -53,14 +45,16 @@ layout = dbc.Container([
 
 
     dbc.Row([
-        html.Legend('DataRouter',
-                        style={"text-align": "center"}),
-        html.Div(id='dash-interfaces', className='dbc'),
+        html.Legend('DataRouter', style={"text-align": "center"}),
         html.Br()
-
     ]),
     dbc.Row([
-        html.Div(id='tabela-interface', className='dbc')
+        dbc.Col([
+            dbc.Card([
+                html.Legend('Status das Interfaces'),
+                html.Div(id='tabela-interface', className='dbc'),                
+            ], style={'height': '100%', 'padding':'10px' })
+        ],  width=12),  
     ]),
     dbc.Row([
         dcc.Interval(

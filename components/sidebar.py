@@ -17,16 +17,7 @@ import pdb
 
 # ========= Layout ========= #
 layout = dbc.Col([
-        html.H1("MIkrotik", className="text-primary"),
-        html.P("By TI", className="text-info"),
-        html.Hr(),
-
-         #seção Perfil
-    dbc.Button(id='botao_avatar',
-        children=[html.Img(src='/assets/img_home.png', id='avatar_charge', alt='Avatar', className='perfil_avatar', width="100", height="100",)
-    ], style={'background-color': 'transparent', 'border-color': 'transparent'}),
-
-  
+    html.H1("Menu", className="text-primary"),
     html.Hr(),
     dbc.Row([
     
@@ -37,6 +28,7 @@ layout = dbc.Col([
         dbc.NavLink("Geral", href="/", active="exact"),
         dbc.NavLink("Sistema", href="/rb_cpu", active="exact"),
         dbc.NavLink("Interfaces", href="/rb_interfaces", active="exact"),
+        dbc.NavLink("Alertas", href="/rb_alertas", active="exact"),
         dbc.NavLink("Dispositivos", href="/infrastructure", active="exact"),
     ], vertical=True, pills=True, id='nav_buttons', style={"margin-bottom":"50px"}),
     ], id='sidebar_completa'),

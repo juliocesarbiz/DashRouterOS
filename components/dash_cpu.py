@@ -27,6 +27,8 @@ def verifica_lista_portas(data):
 
     # Passo 1: Executar a primeira consulta para obter os valores distintos
     distinct_values = collection.distinct("name")
+    print('distinct_values')
+
     print(distinct_values)
 
     # Passo 2: Usar o resultado da primeira consulta na segunda consulta
@@ -54,7 +56,11 @@ layout = dbc.Container([
 
     ]),
     dbc.Row([
-        dcc.Graph(id='graph-cpu')
+        dbc.Col(
+            dbc.Card([
+                dcc.Graph(id='graph-cpu')
+            ], style={'height': '100%', 'padding':'10px' }),  width=12
+        ),  
     ]),
     dbc.Row([
         dcc.Interval(

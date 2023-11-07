@@ -25,21 +25,13 @@ uso_cpu = 0
 
 
 def verifica_lista_portas(data):
-    collection = database['rb_interface']
 
-    # Passo 1: Executar a primeira consulta para obter os valores distintos
+    collection = database['rb_interface']
     distinct_values = collection.distinct("name")
+    print('lista portas distintas')
     print(distinct_values)
 
-    # Passo 2: Usar o resultado da primeira consulta na segunda consulta
-    subquery_result = collection.find({'name': {'$in': distinct_values}})
-    df = pd.DataFrame(subquery_result)
-    lista_interfaces = pd.unique(df[data])
-
-    # Fechar conexão com o MongoDB
-    #client.close()
-
-    return lista_interfaces
+    return distinct_values
 
 
 # Inicializando o aplicativo Dash

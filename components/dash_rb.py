@@ -25,21 +25,13 @@ uso_cpu = 0
 
 
 def verifica_lista_portas(data):
-    collection = database['rb_interface']
 
-    # Passo 1: Executar a primeira consulta para obter os valores distintos
+    collection = database['rb_interface']
     distinct_values = collection.distinct("name")
+    print('lista portas distintas')
     print(distinct_values)
 
-    # Passo 2: Usar o resultado da primeira consulta na segunda consulta
-    subquery_result = collection.find({'name': {'$in': distinct_values}})
-    df = pd.DataFrame(subquery_result)
-    lista_interfaces = pd.unique(df[data])
-
-    # Fechar conexão com o MongoDB
-    #client.close()
-
-    return lista_interfaces
+    return distinct_values
 
 
 # Inicializando o aplicativo Dash
@@ -50,6 +42,12 @@ layout = dbc.Container([
     dcc.Store(id='store-nome-interface', data=verifica_lista_portas('name')),
 
     html.Div(id='output-provider'),
+
+    dcc.ConfirmDialog(
+        id='confirm-danger',
+        message='Alerta: ',
+    ),
+
 
     dbc.Row([
         dbc.Row([
@@ -120,7 +118,7 @@ layout = dbc.Container([
         dbc.Col([
             dbc.CardGroup([
                 dbc.Card([
-                    html.Legend('Up Time'),
+                    html.Legend('Uptime'),
                     html.H5("10 Dias", id='p-uptime-rb', style={}),
                 ], style={'padding-left': '20px', 'padding-top': '10px'}),
             ],style={'height':120})
@@ -168,10 +166,27 @@ layout = dbc.Container([
     ]),
     
     html.Br(),
-    dbc.Col(
-        dbc.Card(dcc.Graph(id='graph-ping'), style={'height': '100%', 'padding':'10px' }),  width=12
-    ),
+    dbc.Col([
+            dbc.Card([
+                dcc.Graph(id='graph-ping'),
+                    html.Div([
+                dbc.Button(
+                    "Sobre Estatísticas de Servidor DNS",
+                    id="collapse-button-dns",
+                    className="mb-3",
+                    color="primary",
+                    n_clicks=0,
+                ),
+                dbc.Collapse(
+                    dbc.Card(dbc.CardBody("É utilizado para monitorar a qualidade da rede e a latência, além disso detectar quedas de conexão com o provedor de internet.")),
+                    id="collapse-dns",
+                    is_open=False,
+                ),
+            ])
+        ],style={'height': '100%', 'padding':'10px' } )
+    ],  width=12),
     html.Br(),
+    
     dbc.Col([
        
         dbc.Card([
@@ -195,22 +210,24 @@ layout = dbc.Container([
             ])
         ],style={'height': '100%', 'padding':'10px' } )
     ],  width=12),
-
-    dbc.Row([
-        dcc.Graph(id='graph1')
-    ]),
-    dbc.Row([
-        html.Label("Interfaces"),
-        html.Div(
-            dcc.Dropdown(
-                id="dropdown-nome-interfaces",
-                clearable=False,
-                style={"width": "100%"},
-                persistence=True,
-                persistence_type="session",
-                multi=True)
-        ),
-    ]),
+    html.Br(),
+    
+    dbc.Col([
+        dbc.Card([
+            dcc.Graph(id='graph1'),
+            html.Label("Interfaces"),
+            html.Div(
+                dcc.Dropdown(
+                    id="dropdown-nome-interfaces",
+                    clearable=False,
+                    style={"width": "100%"},
+                    persistence=True,
+                    persistence_type="session",
+                    multi=True)),
+        ],style={'height': '100%', 'padding':'10px' } )
+    ],width=12),
+    html.Br(),
+    html.Br(),
     html.Br(),
     html.Br(),
     dbc.Row([
@@ -245,13 +262,12 @@ def update_line_chart(n, data_nome_interface):
     data = database['rb_monitor_traffic'].find(filtro).sort('data-hora',-1).limit(1500)  # Limitando a 10 registros
 
     df = pd.DataFrame(data)
-    print ("data frame -----------------------------------------------------")
-    print(df)
-    print("\n\n\n\n\n\n")
 
 
     # Gerando o gráfico de linhas duplas
-    fig = px.line(df, x='data-hora', y=['rx-bits-per-second', 'tx-bits-per-second'], title='Grafico 1')
+    fig = px.line(df, x='data-hora', y=['rx-bits-per-second', 'tx-bits-per-second'], title='Estatísticas de tráfego por interface')
+    fig.update_layout(yaxis_title="Mbps")
+
     fig.update_layout(autotypenumbers='convert types')
 
     return fig
@@ -280,19 +296,10 @@ def tabela_neighbors(n):
     df = df.rename(columns={'version': 'versão'})
     df = df.rename(columns={'address': 'Endereço'})
 
-
     df = df.set_index('id')
-
-    print ("data frame")
-    print(df)
-
     df = df.fillna('-')
 
-    #df.sort_values(by='data', ascending=False)
-
     tabela = dash_table.DataTable(df.to_dict('records'), [{"name": i, "id": i} for i in df.columns])
-    
-
     return tabela
 
 @app.callback(
@@ -306,6 +313,15 @@ def toggle_collapse(n, is_open):
     return is_open
 
 
+@app.callback(
+    Output("collapse-dns", "is_open"),
+    [Input("collapse-button-dns", "n_clicks")],
+    [State("collapse-dns", "is_open")],
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 ##----------------------------------------------------------------
 ## Atualiza o gráfico de latencia de ping
 ##----------------------------------------------------------------
@@ -327,7 +343,8 @@ def update_graph_ping(n):
 
     # Gerando o gráfico de linhas duplas
     fig = px.line(df, x='data-hora', y=['avg-rtt_ms','time_ms'], title='Ping Servidores DNS')
-    #fig.update_layout(autotypenumbers='convert types')
+    fig.update_layout(yaxis_title="Milissegundo (ms)")
+    fig.update_layout(autotypenumbers='convert types')
 
     return fig
 
@@ -393,6 +410,26 @@ def cb_graduated_bar(n):
     version = df_sys.iloc[0]['version']
     bad_blocks = df_sys.iloc[0]['bad-blocks']
 
-    uso_cpu = cpu_t2
+    uso_cpu = cpu_l
 
     return (cpu_l, cpu_f2,f"{cpu_f} Mhz", cpu_t, f"{cpu_t2} ºC",uptime,board_name,architecture,build_time,version,bad_blocks)
+
+
+
+##----------------------------------------------------------------
+## Alertas
+##----------------------------------------------------------------
+
+@app.callback(
+    Output('confirm-danger', 'displayed'),
+    Input('interval-component', 'n_intervals')
+)
+def display_confirm(value):
+    data_sys = database['rb_sytem'].find().sort('data-hora',-1).limit(1)  
+    df_sys = pd.DataFrame(data_sys)
+    cpu_l  = [df_sys.iloc[0]['cpu-load']]
+
+
+    if (int(cpu_l[0]) > 1):
+        return True
+    return False
